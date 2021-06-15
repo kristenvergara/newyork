@@ -1,0 +1,181 @@
+<html>
+<head>
+  <title> INFO 3300 HOMEWORK 5 Kristen Vergara</title>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/topojson.v2.min.js"></script>
+  <style>
+  .country{
+    fill:lightgrey;
+    stroke: none;
+  }
+  .outline{
+    stroke: black;
+    stroke-width: 1px;
+    fill: none;
+  }
+  .graticule{
+    fill:none;
+    stroke: lightgrey;
+  }
+  .district {
+    fill: lightgrey;
+    stroke: none;
+    stroke-width: 1px;
+  }
+</style>
+</head>
+<body>
+  <svg id= "mercator" height="400" width="600">
+  </svg>
+  <svg id= "equalEarth" height="400" width="600">
+  </svg>
+  <svg id="conicEqualArea" height="400" width="600">
+  </svg>
+  <svg id="ny" height="700" width="800">
+  </svg>
+  <script>
+//PROBLEM 1
+    const svg = d3.select("#mercator");
+    const width = svg.attr("width");
+    const height = svg.attr("height");
+    const margin = { top: 20, right: 20, bottom: 20, left:20};
+    const mapWidth = width - margin.left - margin.right;
+    const mapHeight = height - margin.top - margin.bottom;
+    var map = svg.append("g")
+    .attr("transform","translate("+margin.left+","+margin.top+")");
+
+    const requestData = async () => {
+      const world = await d3.json("world_110m.json");
+      console.log(world);
+
+    var countries = topojson.feature(world, world.objects.countries);
+    var countriesMesh = topojson.mesh(world, world.objects.countries);
+    var projection = d3.geoMercator().fitSize([mapWidth, mapHeight], countries);
+    var path = d3.geoPath().projection(projection);
+    map.append("path")
+    .attr("class","graticule")
+    .attr("d", path( d3.geoGraticule10() ))
+    map.selectAll("path").data(countries.features)
+    .enter()
+    .append("path")
+    .attr("class","country")
+    .attr("d",path);
+    map.append("path")
+    .datum(countriesMesh)
+    .attr("class","outline")
+    .attr("d", path);
+
+
+    const svg1 = d3.select("#equalEarth");
+    const map1 = svg1.append("g")
+    .attr("transform","translate("+margin.left+","+margin.top+")");
+
+    var countries = topojson.feature(world, world.objects.countries);
+    var countriesMesh = topojson.mesh(world, world.objects.countries);
+    var projection = d3.geoEqualEarth().fitSize([mapWidth, mapHeight], countries);
+    var path = d3.geoPath().projection(projection);
+    map1.append("path")
+    .attr("class","graticule")
+    .attr("d", path( d3.geoGraticule10() ))
+    map1.selectAll("path").data(countries.features)
+    .enter()
+    .append("path")
+    .attr("class","country")
+    .attr("d",path);
+    map1.append("path")
+    .datum(countriesMesh)
+    .attr("class","outline")
+    .attr("d", path);
+
+
+
+
+    const svg2 = d3.select("#conicEqualArea");
+    const map2 = svg2.append("g")
+    .attr("transform","translate("+margin.left+","+margin.top+")");
+
+    var countries = topojson.feature(world, world.objects.countries);
+    var countriesMesh = topojson.mesh(world, world.objects.countries);
+    var projection = d3.geoConicEqualArea().fitSize([mapWidth, mapHeight], countries);
+    var path = d3.geoPath().projection(projection);
+    map2.append("path")
+    .attr("class","graticule")
+    .attr("d", path( d3.geoGraticule10() ))
+    map2.selectAll("path").data(countries.features)
+    .enter()
+    .append("path")
+    .attr("class","country")
+    .attr("d",path);
+    map2.append("path")
+    .datum(countriesMesh)
+    .attr("class","outline")
+    .attr("d", path);
+
+
+
+
+//PROBLEM 2
+    const svg3 = d3.select("#ny");
+    const nywidth = svg.attr("width");
+    const nyheight = svg.attr("height");
+    const nymargin = { top: 20, right: 20, bottom: 20, left:20};
+    const nymapWidth = nywidth - nymargin.left - nymargin.right;
+    const nymapHeight = nyheight - nymargin.top - nymargin.bottom;
+    var map3 = svg3.append("g")
+    .attr("transform","translate("+nymargin.left+","+nymargin.top+")");
+
+
+      const nyd = await d3.json("new_york_districts.json");
+      console.log(nyd);
+
+    var districts = topojson.feature(nyd, nyd.objects.districts);
+    var projection = d3.geoMercator().fitSize([nymapWidth, nymapHeight], districts);
+    var path = d3.geoPath().projection(projection);
+    var point = [-76.5, 42.443333];
+    console.log(projection(point));
+    map3.selectAll("path").data(districts.features)
+    .enter()
+    .append("path")
+    .attr("class","district")
+    .attr("stroke-width", "1px")
+    .attr("d",path);
+
+    const colorScale = d3.scaleLinear()
+                          .domain([30,50,70])
+                          .range(["red", "lightgrey", "blue" ])
+                          .clamp(true)
+                          .interpolate(d3.interpolateHcl);
+    map3.selectAll(".district")
+    .style("fill", d => colorScale(d.properties.percent_clinton));
+    map3.selectAll("circle")
+		.data([point]).enter()
+		.append("circle")
+    .attr("cx", function (d) { console.log(projection(d)); return projection(d)[0]; })
+		.attr("cy", function (d) { return projection(d)[1]; })
+		.attr("r", "10")
+		.attr("fill", "white");
+
+  };
+  requestData();
+    </script>
+<p>
+  D. a) An advantage of the Mercator projection would be that it has the correct shapes for each country, so people can truly see how different countries look
+  b) A drawback would be that countries towards the equator look larger than they actually are, so it doesn't display true sizing.
+  c) Marine navigation
+</p>
+<p>
+  E. a)An advantage of the Equal Earth projections is the area of a region on the globe is proportional to the area of its projection.
+  b) Distortion near the poles is really bad.
+  c) Good for estimating the size of a country compared to other countries. Would use this to make a list of countries from largest to smallest.
+</p>
+<p>
+  F. a)Shape along the standard parallels is accurate and minimally distorted in the region between the standard parallels and those regions just beyond.
+  b)Neither shape nor linear scale is correct.
+  c)Used for small regions or countries but not continents.
+</p>
+
+
+
+
+    </body>
+    </html>
